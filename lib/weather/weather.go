@@ -2,9 +2,7 @@ package weather
 
 import (
     "log"
-    "bytes"
     "time"
-    "os/exec"
     "net/http"
     "encoding/json"
     "strconv"
@@ -57,14 +55,19 @@ type OWM_Sys struct {
     Sunset int
 }
 
-func getWeather(city string) string {
-    cmd := exec.Command("/bin/sh", "./weather.sh", city)
-    var out bytes.Buffer
-    cmd.Stdout = &out
-    if err := cmd.Run(); err != nil {
-        log.Fatal(err)
+func getWeather(cityName string) string {
+    city, err := GetCityByName(m_db, cityName)
+    if err != nil {
+        log.Println(err)
+        return ""
     }
-    return out.String()
+
+    weather, err := GetWeatherResponse(city)
+    if err != nil {
+        log.Println(err)
+        return ""
+    }
+    return WeatherIcon(weather)
 }
 
 var httpClient = &http.Client{Timeout: 10*time.Second}
@@ -90,7 +93,7 @@ func GetWeatherResponse(city CityJson) (OWM_WeatherResponse, error) {
     return weather, err
 }
 
-func Icon (weatherResponse OWM_WeatherResponse) string {
+func WeatherIcon (weatherResponse OWM_WeatherResponse) string {
     var icon string
     switch weatherResponse.Weather[0].Icon {
     case "01d":
@@ -130,4 +133,6 @@ func Icon (weatherResponse OWM_WeatherResponse) string {
     case "50n":
         icon = "🌫️"
     }
+
+    return icon
 }

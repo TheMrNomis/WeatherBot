@@ -24,6 +24,7 @@ func init() {
 }
 
 func main() {
+    defer weather.Close()
     if m_settings.Token == "" || m_settings.Token == "<your token>" {
         log.Fatal("no token provided")
         return

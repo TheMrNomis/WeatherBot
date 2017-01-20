@@ -15,7 +15,7 @@ type CityJson struct {
     Country string
 }
 
-func OpenDatabase(settings botSettings.Settings) (*sql.DB, error) {
+func OpenDatabase(settings *botSettings.Settings) (*sql.DB, error) {
     return sql.Open("sqlite3", settings.DBFile)
 }
 
