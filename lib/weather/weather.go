@@ -69,8 +69,6 @@ func HandleMessage(session *discordgo.Session, message *discordgo.MessageCreate)
             city = m_settings.DefaultLocation
         }
 
-        log.Println("city = '", city, "'")
-
         var msg = "```" + getWeather(city) + "```"
         _, err := session.ChannelMessageSend(message.ChannelID, msg)
         if err != nil {
