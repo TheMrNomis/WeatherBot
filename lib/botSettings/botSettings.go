@@ -10,7 +10,10 @@ import (
 type Settings struct {
     Token string
     APIkey string
+    DBFile string
+
     Channel string
+
     Lang string
     DefaultLocation string
 }

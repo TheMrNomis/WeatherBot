@@ -1,7 +1,7 @@
-
 {
     "token":"<your token>",
     "APIkey":"<open weather map API key>",
+    "DBfile":"/etc/weatherbot/database.db",
     "channel":"weather",
     "lang":"en",
     "defaultLocation":"Mourmansk"
