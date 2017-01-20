@@ -7,6 +7,8 @@ import (
     "encoding/json"
     "database/sql"
     _ "github.com/mattn/go-sqlite3"
+
+    "weatherbot/lib/weather"
 )
 
 func CreateCityDb (db *sql.DB, cityFilename string) error {
@@ -14,12 +16,6 @@ func CreateCityDb (db *sql.DB, cityFilename string) error {
     if err != nil {
         log.Fatal("Error creating table city:", err)
         return err
-    }
-
-    type cityJson struct {
-        Id int64
-        Name string
-        Country string
     }
 
     cityFile, err := os.Open(cityFilename)
@@ -30,7 +26,7 @@ func CreateCityDb (db *sql.DB, cityFilename string) error {
     }
 
     dec := json.NewDecoder(cityFile)
-    var cities []cityJson
+    var cities []weather.CityJson
     if err := dec.Decode(&cities); err != nil {
         log.Fatal("Error decoding the json:", err)
         return err
