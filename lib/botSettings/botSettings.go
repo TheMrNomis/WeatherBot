@@ -11,6 +11,7 @@ type Settings struct {
     Token string
     APIkey string
     Channel string
+    Lang string
     DefaultLocation string
 }
 
@@ -20,6 +21,7 @@ func setError(err error) error {
 
 func GetSettings(filename string) (Settings, error) {
     file, err := os.Open(filename)
+    defer file.Close()
     if err != nil {
         localError := setError(err)
         log.Fatal(localError)

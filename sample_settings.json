@@ -3,5 +3,6 @@
     "token":"<your token>",
     "APIkey":"<open weather map API key>",
     "channel":"weather",
+    "lang":"en",
     "defaultLocation":"Mourmansk"
 }
