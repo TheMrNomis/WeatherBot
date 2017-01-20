@@ -6,6 +6,7 @@ import (
     "net/http"
     "encoding/json"
     "strconv"
+    "database/sql"
 )
 
 type OWM_WeatherResponse struct {
@@ -58,16 +59,18 @@ type OWM_Sys struct {
 func getWeather(cityName string) string {
     city, err := GetCityByName(m_db, cityName)
     if err != nil {
-        log.Println(err)
-        return ""
+        if err != sql.ErrNoRows {
+            log.Println(err)
+        }
+        return "I'm sorry, I couldn't understand the city name 🙁"
     }
 
     weather, err := GetWeatherResponse(city)
     if err != nil {
         log.Println(err)
-        return ""
+        return "Sorry, but the weather is unavailable for " + city.Name + " 🙁"
     }
-    return WeatherIcon(weather)
+    return WeatherIcon(weather) + " " + weather.Weather[0].Description + " (" + strconv.FormatFloat(weather.Main.Temp, 'G', -1, 64) + "°C)"
 }
 
 var httpClient = &http.Client{Timeout: 10*time.Second}
@@ -85,7 +88,7 @@ func getJson(url string, target interface{}) error {
 }
 
 func GetWeatherResponse(city CityJson) (OWM_WeatherResponse, error) {
-    url := "http://api.openweathermap.org/data/2.5/weather?id="+strconv.Itoa(city.Id)+"&lang=en&APPID=b2a51b191213f325c7709785ec4f6b72"
+    url := "http://api.openweathermap.org/data/2.5/weather?id="+strconv.Itoa(city.Id)+"&lang="+m_settings.Lang+"&APPID="+m_settings.APIkey+"&units=metric"
     log.Println(url)
     var weather OWM_WeatherResponse
     err := getJson(url, &weather)
