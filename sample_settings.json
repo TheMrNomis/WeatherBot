@@ -1,6 +1,7 @@
 
 {
     "token":"<your token>",
+    "APIkey":"<open weather map API key>",
     "channel":"meteo",
     "defaultLocation":"rennes"
 }

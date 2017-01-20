@@ -9,6 +9,7 @@ import (
 
 type Settings struct {
     Token string
+    APIkey string
     Channel string
     DefaultLocation string
 }
