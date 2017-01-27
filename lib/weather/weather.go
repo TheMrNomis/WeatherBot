@@ -82,9 +82,19 @@ func getWeather(cityName string) string {
     return weatherString(city)
 }
 
+func formatCountryName(countryName string) string {
+    switch countryName {
+    case "UK":
+        countryName = "GB"
+    }
+
+    return countryName;
+}
+
 func getWeatherWithCountry(cityName string, countryName string) string {
     cityName = strings.Title(cityName)
     countryName = strings.ToUpper(countryName)
+    countryName = formatCountryName(countryName)
     city, err := GetCityByNameAndCountry(m_db, cityName, countryName)
     if err != nil {
         if err != sql.ErrNoRows {
