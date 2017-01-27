@@ -64,7 +64,7 @@ func HandleMessage(session *discordgo.Session, message *discordgo.MessageCreate)
     if rgxp.MatchString(message.Content) {
         result := rgxp.FindStringSubmatch(message.Content)
 
-        var rgxpCityCountry = regexp.MustCompile(`(\w*), *(\w*)`)
+        var rgxpCityCountry = regexp.MustCompile(`(\w*),\s*(\w*)`)
         if rgxpCityCountry.MatchString(result[2]) {
             res := rgxpCityCountry.FindStringSubmatch(result[2])
             var city = res[1]

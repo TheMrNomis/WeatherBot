@@ -9,6 +9,7 @@ import (
     "database/sql"
     "math"
     "strings"
+    "unicode/utf8"
 )
 
 type OWM_WeatherResponse struct {
@@ -66,7 +67,28 @@ func weatherString(city CityJson) string {
     }
 
     feltTemperature := FeltTemperature(weather)
-    return WeatherIcon(weather) + " " + weather.Weather[0].Description + " (" + strconv.FormatFloat(weather.Main.Temp, 'G', -1, 64) + "°C, ressentit " + strconv.FormatFloat(feltTemperature, 'G', 2, 64) + "°C)"
+
+    str := countryNameToUT8Flag(city.Country) + " " + city.Name + ": "
+    str += WeatherIcon(weather) + " " + weather.Weather[0].Description
+    str += " (" + strconv.FormatFloat(weather.Main.Temp, 'G', -1, 64) + "°C, "
+    str += "felt " + strconv.FormatFloat(feltTemperature, 'G', 2, 64) + "°C)"
+
+    return str
+}
+
+func countryNameToUT8Flag(countryName string) string {
+    str := []rune(countryName)
+    stre := []byte("")
+
+    for i := 0; i < len(str); i++ {
+        c := str[i] - 'A' + '🇦'
+        buf := make([]byte, utf8.RuneLen(c))
+        utf8.EncodeRune(buf, c)
+        for j := 0; j < len(buf); j++ {
+            stre = append(stre, buf[j])
+        }
+    }
+    return string(stre)
 }
 
 func getWeather(cityName string) string {
