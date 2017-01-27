@@ -7,6 +7,8 @@ import (
     "encoding/json"
     "strconv"
     "database/sql"
+    "math"
+    "strings"
 )
 
 type OWM_WeatherResponse struct {
@@ -56,7 +58,19 @@ type OWM_Sys struct {
     Sunset int
 }
 
+func weatherString(city CityJson) string {
+    weather, err := GetWeatherResponse(city)
+    if err != nil {
+        log.Println(err)
+        return "Sorry, but the weather is unavailable for " + city.Name + " 🙁"
+    }
+
+    feltTemperature := FeltTemperature(weather)
+    return WeatherIcon(weather) + " " + weather.Weather[0].Description + " (" + strconv.FormatFloat(weather.Main.Temp, 'G', -1, 64) + "°C, ressentit " + strconv.FormatFloat(feltTemperature, 'G', 2, 64) + "°C)"
+}
+
 func getWeather(cityName string) string {
+    cityName = strings.Title(cityName)
     city, err := GetCityByName(m_db, cityName)
     if err != nil {
         if err != sql.ErrNoRows {
@@ -65,12 +79,21 @@ func getWeather(cityName string) string {
         return "I'm sorry, I couldn't understand the city name 🙁"
     }
 
-    weather, err := GetWeatherResponse(city)
+    return weatherString(city)
+}
+
+func getWeatherWithCountry(cityName string, countryName string) string {
+    cityName = strings.Title(cityName)
+    countryName = strings.ToUpper(countryName)
+    city, err := GetCityByNameAndCountry(m_db, cityName, countryName)
     if err != nil {
-        log.Println(err)
-        return "Sorry, but the weather is unavailable for " + city.Name + " 🙁"
+        if err != sql.ErrNoRows {
+            log.Println(err)
+        }
+        return "I'm sorry, no combination of this city name and country found 🙁"
     }
-    return WeatherIcon(weather) + " " + weather.Weather[0].Description + " (" + strconv.FormatFloat(weather.Main.Temp, 'G', -1, 64) + "°C)"
+
+    return weatherString(city)
 }
 
 var httpClient = &http.Client{Timeout: 10*time.Second}
@@ -89,11 +112,16 @@ func getJson(url string, target interface{}) error {
 
 func GetWeatherResponse(city CityJson) (OWM_WeatherResponse, error) {
     url := "http://api.openweathermap.org/data/2.5/weather?id="+strconv.Itoa(city.Id)+"&lang="+m_settings.Lang+"&APPID="+m_settings.APIkey+"&units=metric"
-    log.Println(url)
     var weather OWM_WeatherResponse
     err := getJson(url, &weather)
 
     return weather, err
+}
+
+func FeltTemperature (weatherResponse OWM_WeatherResponse) float64 {
+    temp := weatherResponse.Main.Temp
+    wind := weatherResponse.Wind.Speed
+    return 13.2 + 0.6215*temp + (0.3965*temp - 11.37)*math.Pow(wind*3.6, 0.16)
 }
 
 func WeatherIcon (weatherResponse OWM_WeatherResponse) string {

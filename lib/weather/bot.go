@@ -59,19 +59,35 @@ func HandleGuildCreate(session *discordgo.Session, event *discordgo.GuildCreate)
 }
 
 func HandleMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
-    var rgxp = regexp.MustCompile(`^!weather(\s(\w*))?$`)
+    var rgxp = regexp.MustCompile(`^!weather(\s(.*))?$`)
+
     if rgxp.MatchString(message.Content) {
         result := rgxp.FindStringSubmatch(message.Content)
-        var city = result[2]
 
-        if city == "" {
-            city = m_settings.DefaultLocation
-        }
+        var rgxpCityCountry = regexp.MustCompile(`(\w*), *(\w*)`)
+        if rgxpCityCountry.MatchString(result[2]) {
+            res := rgxpCityCountry.FindStringSubmatch(result[2])
+            var city = res[1]
+            var country = res[2]
 
-        var msg = getWeather(city)
-        _, err := session.ChannelMessageSend(message.ChannelID, msg)
-        if err != nil {
-            log.Println("error sending message, ", err)
+            var msg = getWeatherWithCountry(city, country)
+            _, err := session.ChannelMessageSend(message.ChannelID, msg)
+            if err != nil {
+                log.Println("error sending message, ", err)
+            }
+        } else {
+            var city = result[2]
+
+            if city == "" {
+                city = m_settings.DefaultLocation
+            }
+
+            var msg = getWeather(city)
+            _, err := session.ChannelMessageSend(message.ChannelID, msg)
+            if err != nil {
+                log.Println("error sending message, ", err)
+            }
         }
     }
+
 }
