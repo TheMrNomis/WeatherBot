@@ -57,3 +57,13 @@ func CreateCityDb (db *sql.DB, cityFilename string) error {
 
     return nil
 }
+
+func CreateScoreDb (db *sql.DB) error{
+    _, err := db.Exec(`CREATE TABLE IF NOT EXISTS scores (score_id integer not null primary key);`)
+    if err != nil {
+        log.Fatal("Error creating table scores:", err)
+        return err
+    }
+
+    return nil
+}
