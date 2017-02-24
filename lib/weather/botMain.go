@@ -2,8 +2,9 @@ package weather
 
 import (
     "log"
-    "regexp"
+    "strings"
     "database/sql"
+    "unicode/utf8"
 
     "github.com/bwmarrin/discordgo"
     "weatherbot/lib/botSettings"
@@ -59,35 +60,39 @@ func HandleGuildCreate(session *discordgo.Session, event *discordgo.GuildCreate)
 }
 
 func HandleMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
-    var rgxp = regexp.MustCompile(`^!weather(\s(.*))?$`)
+    trimedMessage := strings.TrimPrefix(message.Content, "!")
+    if trimedMessage != message.Content { //if they are equals, the prefix was not there
+        msgArgs := strings.Split(strings.Replace(trimedMessage, ",", " ", -1), " ")
 
-    if rgxp.MatchString(message.Content) {
-        result := rgxp.FindStringSubmatch(message.Content)
+        switch msgArgs[0] {
+        case "weather":
+            city := "";
+            country := "";
 
-        var rgxpCityCountry = regexp.MustCompile(`(\w*),\s*(\w*)`)
-        if rgxpCityCountry.MatchString(result[2]) {
-            res := rgxpCityCountry.FindStringSubmatch(result[2])
-            var city = res[1]
-            var country = res[2]
-
-            var msg = getWeatherWithCountry(city, country)
-            _, err := session.ChannelMessageSend(message.ChannelID, msg)
-            if err != nil {
-                log.Println("error sending message, ", err)
+            for _, str := range msgArgs[1:len(msgArgs)] {
+                strlen := utf8.RuneCountInString(str)
+                if strlen > 0 {
+                    if city == "" || strlen > 2 {
+                        city = str
+                    } else {
+                        country = str
+                    }
+                }
             }
-        } else {
-            var city = result[2]
-
-            if city == "" {
-                city = m_settings.DefaultLocation
+            var msg string
+            if country != "" {
+                msg = getWeatherWithCountry(city, country)
+            } else {
+                if city == "" {
+                    city = m_settings.DefaultLocation
+                }
+                msg = getWeather(city)
             }
 
-            var msg = getWeather(city)
             _, err := session.ChannelMessageSend(message.ChannelID, msg)
             if err != nil {
                 log.Println("error sending message, ", err)
             }
         }
     }
-
 }
