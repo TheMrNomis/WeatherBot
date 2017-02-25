@@ -14,7 +14,6 @@ var m_settings *botSettings.Settings
 var m_db *sql.DB
 
 var m_thisUser *discordgo.User
-var m_weatherChannels []*discordgo.Channel
 
 func Init(settings *botSettings.Settings) {
     m_settings = settings;
@@ -36,7 +35,7 @@ func HandleReady(session *discordgo.Session, event *discordgo.Ready) {
 
 func HandleChannelCreate(session *discordgo.Session, event *discordgo.ChannelCreate) {
     if event.Channel.Name == m_settings.Channel {
-        m_weatherChannels = append(m_weatherChannels, event.Channel)
+        addGame(event.Channel)
     }
 }
 
@@ -50,7 +49,7 @@ func HandleGuildCreate(session *discordgo.Session, event *discordgo.GuildCreate)
     var channelFound bool = false;
     for _, channel := range event.Guild.Channels {
         if !channelFound && channel.Name == m_settings.Channel {
-            m_weatherChannels = append(m_weatherChannels, channel)
+            addGame(channel)
             channelFound = true
         }
     }
@@ -64,8 +63,9 @@ func HandleMessage(session *discordgo.Session, message *discordgo.MessageCreate)
     if trimedMessage != message.Content { //if they are equals, the prefix was not there
         msgArgs := strings.Split(strings.Replace(trimedMessage, ",", " ", -1), " ")
 
-        switch msgArgs[0] {
-        case "weather":
+        if msgArgs[0] != "weather"{
+            handleGameFunction(msgArgs, session, message)
+        } else {
             city := "";
             country := "";
 
