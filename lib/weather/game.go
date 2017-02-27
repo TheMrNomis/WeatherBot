@@ -77,7 +77,7 @@ func startGame(currentGame *GameGuild, session *discordgo.Session, message *disc
         }
 
         session.ChannelMessageSend(currentGame.Channel.ID, msg)
-        time.AfterFunc(10*time.Second, func() {
+        time.AfterFunc(30*time.Second, func() {
             endGame(currentGame, session, message)
         })
     }
@@ -85,6 +85,7 @@ func startGame(currentGame *GameGuild, session *discordgo.Session, message *disc
 
 func endGame(currentGame *GameGuild, session *discordgo.Session, message *discordgo.MessageCreate) {
     currentGame.Running = false
+    currentGame.Players = []GamePlayer{}
     session.ChannelMessageSend(currentGame.Channel.ID, "game stopped")
     //TODO: tell the winner
     //TODO: remove all the propositions
