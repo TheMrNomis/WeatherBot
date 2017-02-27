@@ -70,6 +70,11 @@ func startGame(currentGame *GameGuild, session *discordgo.Session, message *disc
         }
 
         session.ChannelMessageSend(currentGame.Channel.ID, message)
+        time.AfterFunc(10*time.Second, func() {
+            currentGame.Running = false
+            session.ChannelMessageSend(currentGame.Channel.ID, "game stopped")
+            //TODO: tell the winner
+        })
     }
 }
 

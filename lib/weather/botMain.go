@@ -4,7 +4,6 @@ import (
     "log"
     "strings"
     "database/sql"
-    "unicode/utf8"
 
     "github.com/bwmarrin/discordgo"
     "weatherbot/lib/botSettings"
@@ -66,30 +65,16 @@ func HandleMessage(session *discordgo.Session, message *discordgo.MessageCreate)
         if msgArgs[0] != "weather"{
             handleGameFunction(msgArgs, session, message)
         } else {
-            city := "";
-            country := "";
-
-            for _, str := range msgArgs[1:len(msgArgs)] {
-                strlen := utf8.RuneCountInString(str)
-                if strlen > 0 {
-                    if city == "" || strlen > 2 {
-                        city = str
-                    } else {
-                        country = str
-                    }
-                }
-            }
+            city, err := GetCityByArgs(m_db, msgArgs)
             var msg string
-            if country != "" {
-                msg = getWeatherWithCountry(city, country)
+            if err == nil {
+                msg = GetWeatherStringForCity(city)
             } else {
-                if city == "" {
-                    city = m_settings.DefaultLocation
-                }
-                msg = getWeather(city)
+                log.Println("error retrieving city: ", err)
+                msg = "The city was not understood"
             }
 
-            _, err := session.ChannelMessageSend(message.ChannelID, msg)
+            _, err = session.ChannelMessageSend(message.ChannelID, msg)
             if err != nil {
                 log.Println("error sending message, ", err)
             }

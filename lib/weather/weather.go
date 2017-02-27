@@ -6,9 +6,7 @@ import (
     "net/http"
     "encoding/json"
     "strconv"
-    "database/sql"
     "math"
-    "strings"
     "unicode/utf8"
 )
 
@@ -59,7 +57,7 @@ type OWM_Sys struct {
     Sunset int
 }
 
-func weatherString(city CityJson) string {
+func GetWeatherStringForCity(city CityJson) string {
     weather, err := GetWeatherResponse(city)
     if err != nil {
         log.Println(err)
@@ -89,43 +87,6 @@ func countryNameToUT8Flag(countryName string) string {
         }
     }
     return string(stre)
-}
-
-func getWeather(cityName string) string {
-    cityName = strings.Title(cityName)
-    city, err := GetCityByName(m_db, cityName)
-    if err != nil {
-        if err != sql.ErrNoRows {
-            log.Println(err)
-        }
-        return "I'm sorry, I couldn't understand the city name 🙁"
-    }
-
-    return weatherString(city)
-}
-
-func formatCountryName(countryName string) string {
-    switch countryName {
-    case "UK":
-        countryName = "GB"
-    }
-
-    return countryName;
-}
-
-func getWeatherWithCountry(cityName string, countryName string) string {
-    cityName = strings.Title(cityName)
-    countryName = strings.ToUpper(countryName)
-    countryName = formatCountryName(countryName)
-    city, err := GetCityByNameAndCountry(m_db, cityName, countryName)
-    if err != nil {
-        if err != sql.ErrNoRows {
-            log.Println(err)
-        }
-        return "I'm sorry, no combination of this city name and country found 🙁"
-    }
-
-    return weatherString(city)
 }
 
 var httpClient = &http.Client{Timeout: 10*time.Second}
