@@ -33,6 +33,10 @@ func addGame(channel *discordgo.Channel) {
     m_currentGames = append(m_currentGames, &tmp)
 }
 
+func computeScore(gameType int, weather OWM_WeatherResponse) float64 {
+    return 0.0
+}
+
 func handleGameFunction(messageArgs []string, session *discordgo.Session, message *discordgo.MessageCreate) {
     var currentGame *GameGuild
     currentGameFound := false
@@ -83,12 +87,36 @@ func startGame(currentGame *GameGuild, session *discordgo.Session, message *disc
     }
 }
 
+func enounceScores(currentGame *GameGuild, session *discordgo.Session) {
+    if len(currentGame.Players) < 1 {
+        session.ChannelMessageSend(currentGame.Channel.ID, "No one played :(")
+        return
+    }
+
+    var maxScore float64
+    var bestProposition *discordgo.User
+
+    maxScore = 0.0
+    for _, proposition := range currentGame.Players {
+        weather, err := GetWeatherResponse(proposition.City)
+        if err != nil {
+            log.Println("error getting weather response: ", err)
+        }
+        score := computeScore(currentGame.Subject, weather)
+
+        if score >= maxScore {
+            maxScore = score
+            bestProposition = proposition.User
+        }
+    }
+
+    session.ChannelMessageSend(currentGame.Channel.ID, "Winner is <@" + bestProposition.ID + ">")
+}
+
 func endGame(currentGame *GameGuild, session *discordgo.Session, message *discordgo.MessageCreate) {
+    enounceScores(currentGame, session)
     currentGame.Running = false
     currentGame.Players = []GamePlayer{}
-    session.ChannelMessageSend(currentGame.Channel.ID, "game stopped")
-    //TODO: tell the winner
-    //TODO: remove all the propositions
 }
 
 func propose(messageArgs []string, currentGame *GameGuild, session *discordgo.Session, message *discordgo.MessageCreate) {
@@ -120,4 +148,5 @@ func propose(messageArgs []string, currentGame *GameGuild, session *discordgo.Se
     } else {
         session.ChannelMessageSend(currentGame.Channel.ID, "<@" + message.Message.Author.ID + "> changed his mind for " + countryNameToUT8Flag(city.Country) + " " + city.Name)
     }
+        log.Println("currentGame.Players.length = ", len(currentGame.Players))
 }
