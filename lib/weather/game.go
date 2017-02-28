@@ -116,8 +116,8 @@ func propose(messageArgs []string, currentGame *GameGuild, session *discordgo.Se
         tmpPlayer := GamePlayer{User: message.Message.Author, City: city}
         currentGame.Players = append(currentGame.Players, tmpPlayer)
 
-        session.ChannelMessageSend(currentGame.Channel.ID, message.Message.Author.Username + " proposed " + countryNameToUT8Flag(city.Country) + " " + city.Name)
+        session.ChannelMessageSend(currentGame.Channel.ID, "<@" + message.Message.Author.ID + "> proposed " + countryNameToUT8Flag(city.Country) + " " + city.Name)
     } else {
-        session.ChannelMessageSend(currentGame.Channel.ID, message.Message.Author.Username + " changed his mind for " + countryNameToUT8Flag(city.Country) + " " + city.Name)
+        session.ChannelMessageSend(currentGame.Channel.ID, "<@" + message.Message.Author.ID + "> changed his mind for " + countryNameToUT8Flag(city.Country) + " " + city.Name)
     }
 }
