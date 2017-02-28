@@ -4,13 +4,14 @@ import (
     "log"
     "time"
     "math/rand"
+    "math"
     "github.com/bwmarrin/discordgo"
 )
 
 const (
-    Temp = iota
+    TempLow = iota
+    TempHigh
     Wind
-    Rain
     EndWeatherSubjectEnum
 )
 
@@ -23,17 +24,26 @@ type GameGuild struct {
     Running bool
     Subject int
     Channel *discordgo.Channel
+    EndTimer *time.Timer
     Players []GamePlayer
 }
 
 var m_currentGames []*GameGuild
 
 func addGame(channel *discordgo.Channel) {
-    tmp := GameGuild{Running: false, Channel: channel}
+    tmp := GameGuild{Running: false, Channel: channel, EndTimer: nil}
     m_currentGames = append(m_currentGames, &tmp)
 }
 
 func computeScore(gameType int, weather OWM_WeatherResponse) float64 {
+    switch gameType {
+    case TempLow:
+        return -weather.Main.Temp
+    case TempHigh:
+        return weather.Main.Temp
+    case Wind:
+        return weather.Wind.Speed
+    }
     return 0.0
 }
 
@@ -52,6 +62,15 @@ func handleGameFunction(messageArgs []string, session *discordgo.Session, messag
         session.ChannelMessageSend(message.ChannelID, "You're not in the right channel!")
         return
     }
+
+    if currentGame.EndTimer != nil {
+        currentGame.EndTimer.Stop()
+    }
+    currentGame.EndTimer = time.AfterFunc(30*time.Second, func() {
+        log.Println("stopping game")
+        endGame(currentGame, session, message)
+        currentGame.EndTimer = nil
+    })
 
     switch messageArgs[0] {
     case "wgstart":
@@ -72,18 +91,15 @@ func startGame(currentGame *GameGuild, session *discordgo.Session, message *disc
         msg := "Game started on the subject of "
 
         switch currentGame.Subject {
-        case Temp:
-            msg += "Temperature"
+        case TempLow:
+            msg += "Lowest temperature"
+        case TempHigh:
+            msg += "Highest temperature"
         case Wind:
             msg += "Wind"
-        case Rain:
-            msg += "Rain"
         }
 
         session.ChannelMessageSend(currentGame.Channel.ID, msg)
-        time.AfterFunc(30*time.Second, func() {
-            endGame(currentGame, session, message)
-        })
     }
 }
 
@@ -96,17 +112,19 @@ func enounceScores(currentGame *GameGuild, session *discordgo.Session) {
     var maxScore float64
     var bestProposition *discordgo.User
 
-    maxScore = 0.0
+    maxScore = -math.MaxFloat64
     for _, proposition := range currentGame.Players {
         weather, err := GetWeatherResponse(proposition.City)
         if err != nil {
             log.Println("error getting weather response: ", err)
         }
         score := computeScore(currentGame.Subject, weather)
+        log.Println(proposition.User.Username, " scores ", score)
 
         if score >= maxScore {
             maxScore = score
             bestProposition = proposition.User
+
         }
     }
 
@@ -148,5 +166,4 @@ func propose(messageArgs []string, currentGame *GameGuild, session *discordgo.Se
     } else {
         session.ChannelMessageSend(currentGame.Channel.ID, "<@" + message.Message.Author.ID + "> changed his mind for " + countryNameToUT8Flag(city.Country) + " " + city.Name)
     }
-        log.Println("currentGame.Players.length = ", len(currentGame.Players))
 }
